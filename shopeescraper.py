@@ -31,11 +31,11 @@ def rate_shop(shopid):
     if data['is_official_shop']:
         point += 3  
 
-    if data['ctime'] >= ctime_milestone['ctime_36']:
+    if data['ctime'] <= ctime_milestone['ctime_36']:
         point += 2
-    elif data['ctime'] > ctime_milestone['ctime_12']:
+    elif data['ctime'] < ctime_milestone['ctime_12']:
         point += 1
-    elif data['ctime'] > ctime_milestone['ctime_6']:
+    elif data['ctime'] < ctime_milestone['ctime_6']:
         point += 0.25
     
     rating_sum = data['rating_good'] + data['rating_bad'] + data['rating_normal'] 
@@ -60,13 +60,14 @@ def rate_user(ratings):
             try:
                 data = get_data_from_api(url)['data']
             except:
-                continue
-            if data['ctime'] >= ctime_milestone['ctime_36']:
-                point += 10
-            elif data['ctime'] > ctime_milestone['ctime_12']:
-                point += 7
-            elif data['ctime'] > ctime_milestone['ctime_6']:
-                point += 3
+               continue
+            if data['ctime'] is not None:
+                if data['ctime'] <= ctime_milestone['ctime_36']:
+                    point += 10
+                elif data['ctime'] < ctime_milestone['ctime_12']:
+                    point += 7
+                elif data['ctime'] < ctime_milestone['ctime_6']:
+                    point += 3
         return point/len(ratings)
     return 0
 
@@ -78,7 +79,6 @@ if __name__ == '__main__':
     url = 'https://shopee.vn/api/v2/search_items/get?keyword='+search_keyword+'&limit=30'
     data = get_data_from_api(url)
     item_list=[]
-    flag = 0
     for i in range(len(data['items'])):
         new_item={}
         for key,value in data['items'][i].items():
@@ -106,8 +106,8 @@ if __name__ == '__main__':
     #calculate ranking point
     for item in item_list:
         print(f'Calculating point for {item["name"]}')
-        shop_point = rate_shop(item['shopid'])
-        user_point = rate_user(item['ratings'])
+        shop_point = round(rate_shop(item['shopid']), 2)
+        user_point = round(rate_user(item['ratings']), 2)
         final_point = round((shop_point + user_point)/2, 2)
         item.update({'final_point':final_point})
         item.update({'shop_point':shop_point})
